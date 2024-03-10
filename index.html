@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <div class="container">
+            <h1 class="app-title">todos</h1>
+            <ul class="todo-list js-todo-list"></ul>
+    
+            <form class="js-form">
+                <input autofocus type="text" aria-label="Enter a new todo item" placeholder="E.g. Have to complete Assignment" class="js-todo-input">
+            </form>
+        </div>
+    </main>
+    
+    <svg style="display: none;">
+        <defs>
+            <symbol id="delete-icon" viewBox="0 0 448 448">
+                <path d="m224 0c-123.710938 0-224 100.289062-224 224s100.289062 224 224 224 224-100.289062 224-224c-.132812-123.65625-100.34375-223.867188-224-224zm124.449219 325.824219c4.15625 4.015625 5.828125 9.964843 4.363281 15.558593s-5.835938 9.964844-11.429688 11.429688-11.542968-.207031-15.558593-4.363281l-101.824219-101.824219-101.824219 101.824219c-6.277343 6.0625-16.257812 5.976562-22.429687-.195313s-6.257813-16.152344-.195313-22.429687l101.824219-101.824219-101.824219-101.824219c-4.15625-4.015625-5.828125-9.964843-4.363281-15.558593s5.835938-9.964844 11.429688-11.429688 11.542968.207031 15.558593 4.363281l101.824219 101.824219 101.824219-101.824219c6.277343-6.0625 16.257812-5.976562 22.429687.195313s6.257813 16.152344.195313 22.429687l-101.824219 101.824219zm0 0" fill="#D80027"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <script>
+
+        
+        // Check if there are existing todo items in localStorage
+        let todoItems = JSON.parse(localStorage.getItem('todoItems')) || [];
+    
+        function renderTodo(todo) {
+            const list = document.querySelector('.js-todo-list');
+            const item = document.querySelector(`[data-key='${todo.id}']`);
+    
+            const isChecked = todo.checked ? 'done' : '';
+            const node = document.createElement("li");
+            node.setAttribute('class', `todo-item ${isChecked}`);
+            node.setAttribute('data-key', todo.id);
+            const dateTime = new Date(todo.createdAt);
+            node.innerHTML = `
+                <input id="${todo.id}" type="checkbox" ${todo.checked ? 'checked' : ''}/>
+                <label for="${todo.id}" class="tick js-tick"></label>
+                <span>${todo.text}</span>
+                <span class="created-at">${dateTime.toLocaleString()}</span>
+                <button class="delete-todo js-delete-todo">
+                    <svg><use href="#delete-icon"></use></svg>
+                </button>
+            `;
+    
+            if (item) {
+                list.replaceChild(node, item);
+            } else {
+                list.append(node);
+            }
+        }
+    
+        function addTodo(text) {
+            const todo = {
+                text,
+                checked: false,
+                id: Date.now(),
+                createdAt: new Date().toISOString() // Add createdAt property with current time
+            };
+    
+            todoItems.push(todo);
+            renderTodo(todo);
+    
+            // Store the updated todoItems array in localStorage
+            localStorage.setItem('todoItems', JSON.stringify(todoItems));
+        }
+    
+        function toggleDone(key) {
+            const index = todoItems.findIndex(item => item.id === Number(key));
+            todoItems[index].checked = !todoItems[index].checked;
+            renderTodo(todoItems[index]);
+    
+            // Store the updated todoItems array in localStorage
+            localStorage.setItem('todoItems', JSON.stringify(todoItems));
+        }
+    
+        function deleteTodo(key) {
+            todoItems = todoItems.filter(item => item.id !== Number(key));
+            document.querySelector(`[data-key='${key}']`).remove();
+    
+            // Store the updated todoItems array in localStorage
+            localStorage.setItem('todoItems', JSON.stringify(todoItems));
+        }
+    
+        const form = document.querySelector('.js-form');
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            const input = document.querySelector('.js-todo-input');
+    
+            const text = input.value.trim();
+            if (text !== '') {
+                addTodo(text);
+                input.value = '';
+                input.focus();
+            }
+        });
+    
+        const list = document.querySelector('.js-todo-list');
+        list.addEventListener('click', event => {
+            if (event.target.classList.contains('js-tick')) {
+                const itemKey = event.target.parentElement.dataset.key;
+                toggleDone(itemKey);
+            }
+    
+            if (event.target.classList.contains('js-delete-todo')) {
+                const itemKey = event.target.parentElement.dataset.key;
+                deleteTodo(itemKey);
+            }
+        });
+    
+        // Render existing todo items when the page loads
+        todoItems.forEach(todo => renderTodo(todo));
+    </script>
+    
+    
+    
+</body>
+</html>
